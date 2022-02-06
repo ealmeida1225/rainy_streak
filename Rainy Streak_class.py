@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
-import pickle
-import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
-import scipy.integrate as integrate
+
+
+# import pickle
+# import matplotlib.pyplot as plt
 
 
 class Rainy_Streak:
@@ -19,15 +19,14 @@ class Rainy_Streak:
         for month in self.separated_months:
             rainy_days_count, rainy_streak_count, rainy_streak_med_long = self.get_rainy_streak(month)
 
-            self.df_final = self.df_final.append({'rainy_days_count': rainy_days_count, 
-                                                  'rainy_streak_count': rainy_streak_count, 
-                                                  'rainy_streak_med_long':rainy_streak_med_long},
-                                 ignore_index=True)
+            self.df_final = self.df_final.append({'rainy_days_count': rainy_days_count,
+                                                  'rainy_streak_count': rainy_streak_count,
+                                                  'rainy_streak_med_long': rainy_streak_med_long},
+                                                 ignore_index=True)
 
         self.rainy_days_mean = self.df_final['rainy_days_count'].mean()
-        self.rainy_streak_mean= self.df_final['rainy_streak_count'].mean()
+        self.rainy_streak_mean = self.df_final['rainy_streak_count'].mean()
         self.rainy_streak_med_long_mean = self.df_final['rainy_streak_med_long'].mean()
-
 
         # self.info_on_a_row = pd.Series(precip_data['Registro'])
         # self.file_name = file_name
@@ -101,44 +100,6 @@ class Rainy_Streak:
         rainy_streak_med_long = 0 if rainy_streak_count == 0 else rainy_days_count / rainy_streak_count
         return rainy_days_count, rainy_streak_count, rainy_streak_med_long
 
-    def exp_function_to_fit(self, x, a, b):
-        return a * x * np.exp(b * x)
-
-    def plot_function(self):
-        fig = plt.figure()
-        axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])  # left, bottom, width, height (range 0 to 1)
-        axes.plot(self.df['cumulative_percentage_of_rainy_days_ni_X'],
-                  self.df['cumulative_percentage_of_rainfall_amounts_Pi_Y'],
-                  'm+', label="Datos experimentales")
-        axes.plot(self.xnew, self.ynew_exp, 'r', label='Función ajustada')
-        axes.plot(self.xnew, self.ynew_exidist, 'b', label='Línea de equidistribución')
-        axes.fill_between(self.xnew, self.ynew_exp, self.ynew_exidist,
-                          alpha=0.5)  # representación gráfica de S'=5000-A'
-
-        axes.set_title("Valor de CI calculado: {0}".format(self.ci))
-        axes.set_xlabel('Suma acumulativa: Ni (%)')
-        axes.set_ylabel('Suma acumulativa: Pi (%)')
-
-        function = ('{0}x*exp({1}x)'
-                    .format(round(self.pars_exp[0], 3), round(self.pars_exp[1], 3)))
-
-        from matplotlib.offsetbox import AnchoredText
-        at = AnchoredText('f(x)={0}\n R^2 = {1}'
-                          .format(function, round(self.R_2, 4)),
-                          prop=dict(size=9, color='m'), frameon=True, loc='lower right')
-        at.patch.set_boxstyle("round,pad=0.,rounding_size=0.3")
-        axes.add_artist(at)
-        axes.text(40, 30, "S' = 5000-A'")
-        axes.legend()
-        # fig.savefig(fname=self.file_name + '.svg', format="svg")
-        fig.savefig(fname=self.file_name + '.png', dpi=250, format="png")
-        # fig.show()
-
-
-# file_route = ''
-# resume_df = pd.DataFrame()
-# pluviometer_data = pd.read_csv('test_data.csv')
-# rainy_streak = Rainy_Streak(pluviometer_data, 'output')
 
 excel_path = 'Full_data.xlsx'
 xlsx = pd.ExcelFile(excel_path)
@@ -151,26 +112,25 @@ xlsx = pd.ExcelFile(excel_path)
 # rainy_streak = Rainy_Streak(df_to_proccess, 'output')
 
 
-
 resume_df = pd.DataFrame()
 with pd.ExcelWriter('output.xlsx') as writer:
     for month in range(12):
-        print(month+1)
+        print(month + 1)
         df_dict = pd.read_excel(xlsx, sheet_name=month)
         df_to_proccess = df_dict.loc[:, ['value', 'Day']]
         rainy_streak = Rainy_Streak(df_to_proccess, 'output')
-        
+
         pd_test = pd.DataFrame([[
-            rainy_streak.rainy_days_mean, 
+            rainy_streak.rainy_days_mean,
             rainy_streak.rainy_streak_mean,
             rainy_streak.rainy_streak_med_long_mean
         ]],
             columns=['Promedio de días lluviosos',
                      'Cantidad promedio de rachas',
                      'Duración media de las rachas',
-                      ],
-            index=['mes ' + str(month+1)])
-        
+                     ],
+            index=['mes ' + str(month + 1)])
+
         resume_df = resume_df.append(pd_test)
     print(resume_df)
     resume_df.to_excel(writer, sheet_name='Resumen')
